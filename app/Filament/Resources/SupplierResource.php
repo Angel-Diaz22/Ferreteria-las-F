@@ -6,9 +6,12 @@ use App\Filament\Resources\SupplierResource\Pages;
 use App\Models\Supplier;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -55,7 +58,22 @@ class SupplierResource extends Resource
 
     public static function canDelete(Model $record): bool
     {
+        if (! (auth()->user()?->hasRole('admin') ?? false)) {
+            return false;
+        }
+
+        return ! $record->purchases()->exists();
+    }
+
+    public static function canDeleteAny(): bool
+    {
         return auth()->user()?->hasRole('admin') ?? false;
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->withCount('purchases');
     }
 
     public static function form(Form $form): Form
@@ -152,11 +170,42 @@ class SupplierResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                Tables\Actions\DeleteAction::make()
+                    ->before(function (Supplier $record, Tables\Actions\DeleteAction $action) {
+                        if ($record->purchases()->exists()) {
+                            Notification::make()
+                                ->title('No se puede eliminar el proveedor')
+                                ->body('El proveedor tiene compras históricas registradas. Desactívelo en su lugar.')
+                                ->danger()
+                                ->send();
+
+                            $action->halt();
+                        }
+                    }),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\DeleteBulkAction::make()
+                        ->action(function (Collection $records) {
+                            $deletable = $records->filter(fn (Supplier $s) => ! $s->purchases()->exists());
+                            $withPurchases = $records->filter(fn (Supplier $s) => $s->purchases()->exists());
+
+                            $deletable->each->delete();
+
+                            if ($withPurchases->isNotEmpty()) {
+                                Notification::make()
+                                    ->warning()
+                                    ->title('Eliminación parcial de proveedores')
+                                    ->body("Se eliminaron {$deletable->count()} proveedor(es). Se omitieron {$withPurchases->count()} con compras registradas.")
+                                    ->send();
+                            } else {
+                                Notification::make()
+                                    ->success()
+                                    ->title('Proveedores eliminados')
+                                    ->body("{$deletable->count()} proveedor(es) eliminados correctamente.")
+                                    ->send();
+                            }
+                        }),
                 ]),
             ]);
     }

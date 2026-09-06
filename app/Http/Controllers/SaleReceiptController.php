@@ -28,6 +28,10 @@ class SaleReceiptController extends Controller
      */
     public function print(Sale $sale): View
     {
+        if (auth()->user()?->roles()->exists() && ! auth()->user()?->can('sales.view') && auth()->id() !== $sale->user_id) {
+            abort(403, 'No tienes permiso para ver recibos de venta.');
+        }
+
         $sale->load(['customer', 'user', 'warehouse', 'items.product']);
 
         $company = $this->getCompanyInfo();
@@ -40,6 +44,10 @@ class SaleReceiptController extends Controller
      */
     public function pdf(Request $request, Sale $sale): Response
     {
+        if (auth()->user()?->roles()->exists() && ! auth()->user()?->can('sales.view') && auth()->id() !== $sale->user_id) {
+            abort(403, 'No tienes permiso para descargar recibos de venta.');
+        }
+
         $sale->load(['customer', 'user', 'warehouse', 'items.product']);
 
         $company = $this->getCompanyInfo();

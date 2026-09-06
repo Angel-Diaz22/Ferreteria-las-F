@@ -1930,42 +1930,56 @@
     {{-- MODAL 3: COBRO EN CAJA CENTRAL (PASO 2: GERENTE)                   --}}
     {{-- ================================================================= --}}
     @if($cashierPaymentModalOpen && $selectedSaleForPayment)
+        @php
+            $saleSubtotal = (float) $selectedSaleForPayment->subtotal;
+            $saleTax      = (float) $selectedSaleForPayment->tax_amount;
+            $saleTotal    = (float) $selectedSaleForPayment->total;
+        @endphp
         <div class="pos-modal-overlay">
-            <div class="pos-modal-container">
-                {{-- Cabecera --}}
-                <div class="flex items-center justify-between px-5 py-4 border-b border-gray-200" style="background-color: #f0fdf4;">
-                    <div class="flex items-center gap-2.5">
-                        <div class="w-9 h-9 rounded-xl flex items-center justify-center text-white" style="background-color: #15803d;">
-                            <x-heroicon-o-banknotes class="w-5 h-5 text-white" />
+            <div class="pos-modal-container" style="max-width: 32rem;">
+
+                {{-- ── Cabecera verde institucional ── --}}
+                <div class="flex items-center justify-between px-5 py-4 border-b border-green-200 rounded-t-[1.25rem]"
+                    style="background: linear-gradient(135deg, #15803d 0%, #16a34a 100%);">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl flex items-center justify-center"
+                            style="background-color: rgba(255,255,255,0.18);">
+                            <x-heroicon-o-banknotes class="w-6 h-6 text-white" />
                         </div>
                         <div>
-                            <h3 class="text-base font-black text-gray-900">Cobro de Pedido #{{ $selectedSaleForPayment->invoice_number }}</h3>
-                            <p class="text-xs text-gray-600">Cliente: {{ $selectedSaleForPayment->customer?->name ?? 'Cliente Mostrador' }}</p>
+                            <h3 class="text-base font-black text-white leading-tight">
+                                Cobro — Pedido #{{ $selectedSaleForPayment->invoice_number }}
+                            </h3>
+                            <p class="text-xs font-medium mt-0.5" style="color: rgba(255,255,255,0.80);">
+                                {{ $selectedSaleForPayment->customer?->name ?? 'Cliente Mostrador / Ocasional' }}
+                            </p>
                         </div>
                     </div>
-                    <button wire:click="closeCashierPaymentModal" type="button" class="text-gray-400 hover:text-gray-700">
+                    <button wire:click="closeCashierPaymentModal" type="button"
+                        class="text-white/70 hover:text-white transition-colors">
                         <x-heroicon-o-x-mark class="w-5 h-5" />
                     </button>
                 </div>
 
-                <div class="p-5 space-y-3.5">
-                    {{-- Banner Total a Cobrar --}}
+                <div class="p-5 space-y-4">
+
+                    {{-- ── Total a cobrar ── --}}
                     <div class="pos-total-banner">
-                        <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 800; opacity: 0.9;">
-                            Total a Cobrar en Caja
+                        <div style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 800; opacity: 0.85;">
+                            Total a Cobrar
                         </div>
-                        <div style="font-size: 2.25rem; font-weight: 900; line-height: 1.1; margin: 0.25rem 0;">
-                            ${{ number_format($selectedSaleForPayment->total, 0, ',', '.') }}
+                        <div style="font-size: 2.5rem; font-weight: 900; line-height: 1.1; margin: 0.35rem 0;">
+                            ${{ number_format($saleTotal, 0, ',', '.') }}
                         </div>
-                        <div style="font-size: 0.8rem; font-weight: 700; opacity: 0.9;">
+                        <div style="font-size: 0.78rem; font-weight: 700; opacity: 0.85;">
                             Pesos Colombianos (COP)
                         </div>
                     </div>
 
-                    {{-- Método de Pago --}}
+                    {{-- ── Método de Pago ── --}}
                     <div>
-                        <label class="block text-xs font-black text-gray-800 mb-1.5 uppercase tracking-wide">
-                            Método de Pago Recibido:
+                        <label class="block text-xs font-black text-gray-800 mb-2 uppercase tracking-wide">
+                            Método de Pago Recibido
                         </label>
                         <div class="pos-payment-grid">
                             @foreach([
@@ -1986,67 +2000,72 @@
                         </div>
                     </div>
 
-                    {{-- Si es Efectivo: Campo y Billetes Rápidos --}}
+                    {{-- ── Si es Efectivo: Campo de monto y billetes rápidos ── --}}
                     @if($cashierPaymentMethod === 'cash')
                         @php
                             $cashierPaid = (float) $cashierPaidAmount;
-                            $orderTotal = (float) $selectedSaleForPayment->total;
                         @endphp
-                        <div class="p-3.5 rounded-xl border border-gray-200 bg-gray-50 space-y-3">
-                            <div>
-                                <label class="block text-xs font-black text-gray-800 mb-1">
-                                    Efectivo Recibido:
-                                </label>
-                                <div class="relative">
-                                    <span class="absolute left-3 top-1/2 -translate-y-1/2 font-black text-gray-500 text-lg">$</span>
-                                    <input
-                                        type="number"
-                                        wire:model.live="cashierPaidAmount"
-                                        min="0"
-                                        class="w-full pl-7 pr-3 py-2 text-xl font-black text-gray-900 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
-                                    />
+                        <div class="rounded-xl border border-gray-200 bg-gray-50 overflow-hidden">
+                            <div class="px-4 py-3 space-y-3">
+                                <div>
+                                    <label class="block text-xs font-black text-gray-700 mb-1.5">
+                                        Efectivo Recibido
+                                    </label>
+                                    <div class="flex items-center bg-white border border-gray-300 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-green-500">
+                                        <span class="px-3 text-lg font-black text-gray-400 select-none border-r border-gray-200 bg-gray-50">$</span>
+                                        <input
+                                            type="number"
+                                            wire:model.live="cashierPaidAmount"
+                                            min="0"
+                                            class="flex-1 px-3 py-2.5 text-xl font-black text-gray-900 bg-white border-0 focus:outline-none focus:ring-0"
+                                        />
+                                    </div>
+                                </div>
+                                <div class="flex flex-wrap gap-1.5">
+                                    <button wire:click="setCashierQuickCash({{ $saleTotal }})"
+                                        type="button" class="pos-quick-bill exact">
+                                        Exacto
+                                    </button>
+                                    @foreach([10000, 20000, 50000, 100000, 200000] as $bill)
+                                        <button wire:click="setCashierQuickCash({{ $bill }})"
+                                            type="button" class="pos-quick-bill">
+                                            ${{ number_format($bill, 0, ',', '.') }}
+                                        </button>
+                                    @endforeach
                                 </div>
                             </div>
-
-                            <div class="flex flex-wrap gap-1.5">
-                                <button wire:click="setCashierQuickCash({{ $orderTotal }})" type="button" class="pos-quick-bill exact">
-                                    Exacto
-                                </button>
-                                @foreach([10000, 20000, 50000, 100000, 200000] as $bill)
-                                    <button wire:click="setCashierQuickCash({{ $bill }})" type="button" class="pos-quick-bill">
-                                        ${{ number_format($bill, 0, ',', '.') }}
-                                    </button>
-                                @endforeach
-                            </div>
-
-                            <div class="flex items-center justify-between pt-2 border-t border-gray-200">
+                            <div class="flex items-center justify-between px-4 py-2.5 border-t border-gray-200">
                                 <span class="text-sm font-black text-gray-800">Cambio / Vueltas:</span>
-                                @if($cashierPaid >= $orderTotal)
+                                @if($cashierPaid >= $saleTotal)
                                     <span class="pos-change-badge">
-                                        ${{ number_format($cashierPaid - $orderTotal, 0, ',', '.') }} COP
+                                        ${{ number_format($cashierPaid - $saleTotal, 0, ',', '.') }} COP
                                     </span>
                                 @else
                                     <span class="pos-missing-badge">
-                                        Faltan ${{ number_format($orderTotal - $cashierPaid, 0, ',', '.') }}
+                                        Faltan ${{ number_format($saleTotal - $cashierPaid, 0, ',', '.') }}
                                     </span>
                                 @endif
                             </div>
                         </div>
                     @endif
 
-                    {{-- Recordatorio de Sello Físico --}}
-                    <div class="p-3.5 rounded-xl border flex items-start gap-2.5 text-xs font-medium"
-                        style="background-color: #fff7ed; border-color: #fed7aa; color: #9a3412;">
-                        <span class="text-base">🏷️</span>
-                        <div>
-                            <strong>RECUERDE AL GERENTE / CAJERO:</strong> Una vez confirmado el pago en el sistema, estampe el <strong>sello físico de tinta "PAGADO"</strong> en la tirilla que trajo el cliente para autorizar el despacho.
-                        </div>
+                    {{-- ── Aviso de sello físico ── --}}
+                    <div class="flex items-start gap-3 p-3.5 rounded-xl border"
+                        style="background-color: #fff7ed; border-color: #fed7aa;">
+                        <x-heroicon-o-exclamation-triangle class="w-5 h-5 shrink-0 mt-0.5" style="color: #c2410c;" />
+                        <p class="text-xs font-medium leading-relaxed" style="color: #9a3412;">
+                            <strong class="font-black">Sello obligatorio:</strong>
+                            Tras confirmar el pago, estampe el sello físico de tinta
+                            <strong>"PAGADO"</strong> en la tirilla del cliente para autorizar el despacho.
+                        </p>
                     </div>
+
                 </div>
 
-                {{-- Acciones --}}
-                <div class="flex gap-2.5 px-5 pb-5">
-                    <button wire:click="closeCashierPaymentModal" type="button" class="pos-btn-cancel w-1/3">
+                {{-- ── Pie de acciones ── --}}
+                <div class="flex gap-3 px-5 pt-4 pb-5 border-t border-gray-100">
+                    <button wire:click="closeCashierPaymentModal" type="button"
+                        class="pos-btn-cancel w-2/5 py-3">
                         Cancelar
                     </button>
                     <button
@@ -2056,10 +2075,17 @@
                         type="button"
                         class="pos-btn-confirm flex-1 py-3"
                     >
-                        <x-heroicon-o-check-circle class="w-5 h-5 text-white" />
-                        <span>Confirmar Pago y Sellar</span>
+                        <span wire:loading.remove wire:target="confirmCashierPayment"
+                            class="flex items-center gap-2">
+                            <x-heroicon-o-check-circle class="w-5 h-5" />
+                            Confirmar Pago y Sellar
+                        </span>
+                        <span wire:loading wire:target="confirmCashierPayment">
+                            Procesando...
+                        </span>
                     </button>
                 </div>
+
             </div>
         </div>
     @endif

@@ -133,6 +133,9 @@ class KardexService
                 ]
             );
 
+            /** @var ProductStock $stockRecord */
+            $stockRecord = ProductStock::where('id', $stockRecord->id)->lockForUpdate()->firstOrFail();
+
             $previousStock = (float) $stockRecord->current_stock;
             $qty = abs($quantity);
 

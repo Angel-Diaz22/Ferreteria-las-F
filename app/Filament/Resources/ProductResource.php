@@ -12,6 +12,7 @@ use Filament\Forms\Get;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\HtmlString;
 
@@ -61,6 +62,13 @@ class ProductResource extends Resource
     public static function canDelete(Model $record): bool
     {
         return auth()->user()?->can('products.manage') ?? false;
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->with(['category', 'brand'])
+            ->withSum('stocks as total_stock', 'current_stock');
     }
 
     public static function form(Form $form): Form
@@ -168,6 +176,7 @@ class ProductResource extends Resource
                                         Forms\Components\TextInput::make('cost_price')
                                             ->label('Precio de Costo (Compra)')
                                             ->numeric()
+                                            ->minValue(0)
                                             ->prefix('$')
                                             ->required()
                                             ->default(0)
@@ -177,6 +186,7 @@ class ProductResource extends Resource
                                         Forms\Components\TextInput::make('sale_price')
                                             ->label('Precio de Venta (Detal / General)')
                                             ->numeric()
+                                            ->minValue(0)
                                             ->prefix('$')
                                             ->required()
                                             ->default(0)
@@ -185,6 +195,9 @@ class ProductResource extends Resource
                                         Forms\Components\TextInput::make('tax_rate')
                                             ->label('IVA (%)')
                                             ->numeric()
+                                            ->minValue(0)
+                                            ->maxValue(100)
+                                            ->step(0.01)
                                             ->suffix('%')
                                             ->default(19)
                                             ->required(),
@@ -244,6 +257,7 @@ class ProductResource extends Resource
                                         Forms\Components\TextInput::make('price')
                                             ->label('Precio para esta Lista')
                                             ->numeric()
+                                            ->minValue(0)
                                             ->prefix('$')
                                             ->required(),
                                     ])
@@ -325,6 +339,7 @@ class ProductResource extends Resource
                 // Stock total consolidado (todos los roles pueden verlo)
                 Tables\Columns\TextColumn::make('total_stock')
                     ->label('Stock Total')
+                    ->sortable()
                     ->state(fn (Product $record): string => $record->total_stock.' '.$record->unit)
                     ->badge()
                     ->color(function (Product $record): string {

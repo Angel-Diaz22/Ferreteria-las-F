@@ -93,6 +93,14 @@ class Customer extends Model
      */
     public function getHasConsentedAttribute(): bool
     {
+        if (array_key_exists('has_consented', $this->attributes)) {
+            return (bool) $this->attributes['has_consented'];
+        }
+
+        if (array_key_exists('consent_logs_exists', $this->attributes)) {
+            return (bool) $this->attributes['consent_logs_exists'];
+        }
+
         return $this->consentLogs()->exists();
     }
 }

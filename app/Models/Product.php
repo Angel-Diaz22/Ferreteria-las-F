@@ -137,8 +137,16 @@ class Product extends Model
     /**
      * LÓGICA DE NEGOCIO: Stock total sumando todas las bodegas.
      */
-    public function getTotalStockAttribute(): float
+    public function getTotalStockAttribute($value = null): float
     {
+        if (array_key_exists('total_stock', $this->attributes)) {
+            return (float) ($this->attributes['total_stock'] ?? 0);
+        }
+
+        if ($this->relationLoaded('stocks')) {
+            return (float) $this->stocks->sum('current_stock');
+        }
+
         return (float) $this->stocks()->sum('current_stock');
     }
 }

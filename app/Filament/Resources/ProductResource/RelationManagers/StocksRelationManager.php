@@ -11,6 +11,7 @@ use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\DB;
 
 /**
  * ============================================================================
@@ -57,6 +58,7 @@ class StocksRelationManager extends RelationManager
                 Forms\Components\TextInput::make('current_stock')
                     ->label('Stock Actual Disponible')
                     ->numeric()
+                    ->minValue(0)
                     ->default(0)
                     ->disabled(fn (string $operation): bool => $operation === 'edit')
                     ->dehydrated(fn (string $operation): bool => $operation !== 'edit')
@@ -66,12 +68,14 @@ class StocksRelationManager extends RelationManager
                 Forms\Components\TextInput::make('min_stock')
                     ->label('Stock Mínimo de Alerta')
                     ->numeric()
+                    ->minValue(0)
                     ->default(5)
                     ->helperText('Dispara alertas de reposición si baja de esta cantidad'),
 
                 Forms\Components\TextInput::make('max_stock')
                     ->label('Capacidad Máxima')
                     ->numeric()
+                    ->minValue(0)
                     ->nullable()
                     ->helperText('Capacidad física máxima sugerida en estantería'),
             ]);
@@ -122,18 +126,34 @@ class StocksRelationManager extends RelationManager
 
                         return $alreadyAssigned < $totalActive;
                     })
-                    ->after(function (ProductStock $record) {
-                        // Si se asignó con stock inicial > 0, lo registramos en el Kardex
-                        if ($record->current_stock > 0) {
-                            KardexService::registerAdjustment(
-                                product: $record->product,
-                                warehouseId: $record->warehouse_id,
-                                quantity: (float) $record->current_stock,
-                                type: 'adjustment_in',
-                                notes: 'Inventario inicial al asignar producto a la bodega '.$record->warehouse->name,
-                                userId: auth()->id()
-                            );
-                        }
+                    ->using(function (array $data, RelationManager $livewire): ProductStock {
+                        return DB::transaction(function () use ($data, $livewire): ProductStock {
+                            $initialStock = (float) ($data['current_stock'] ?? 0);
+                            $product = $livewire->getOwnerRecord();
+
+                            /** @var ProductStock $record */
+                            $record = $product->stocks()->create([
+                                'warehouse_id' => $data['warehouse_id'],
+                                'current_stock' => 0.00,
+                                'min_stock' => $data['min_stock'] ?? 5.00,
+                                'max_stock' => $data['max_stock'] ?? null,
+                            ]);
+
+                            if ($initialStock > 0) {
+                                KardexService::registerAdjustment(
+                                    product: $product,
+                                    warehouseId: (int) $data['warehouse_id'],
+                                    quantity: $initialStock,
+                                    type: 'adjustment_in',
+                                    notes: 'Inventario inicial al asignar producto a la bodega '.($record->warehouse?->name ?? ''),
+                                    userId: auth()->id()
+                                );
+
+                                $record->refresh();
+                            }
+
+                            return $record;
+                        });
                     }),
             ])
             ->actions([

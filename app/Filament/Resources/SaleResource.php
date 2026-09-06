@@ -11,6 +11,7 @@ use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -377,6 +378,11 @@ class SaleResource extends Resource
             ->bulkActions([
                 // No permitimos borrado masivo de ventas para salvaguardar la integridad fiscal
             ]);
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()->with(['customer', 'user', 'warehouse']);
     }
 
     public static function getRelations(): array

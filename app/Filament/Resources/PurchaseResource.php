@@ -13,6 +13,8 @@ use Filament\Forms\Set;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -44,6 +46,34 @@ class PurchaseResource extends Resource
     public static function canViewAny(): bool
     {
         return auth()->user()?->can('purchases.view') ?? false;
+    }
+
+    public static function canCreate(): bool
+    {
+        return auth()->user()?->can('purchases.create') ?? false;
+    }
+
+    public static function canEdit(Model $record): bool
+    {
+        if ($record instanceof Purchase && $record->status === 'completed') {
+            return false;
+        }
+
+        return auth()->user()?->can('purchases.edit') ?? false;
+    }
+
+    public static function canDelete(Model $record): bool
+    {
+        if ($record instanceof Purchase && $record->status === 'completed') {
+            return false;
+        }
+
+        return auth()->user()?->can('purchases.delete') ?? false;
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()->with(['supplier', 'warehouse', 'user']);
     }
 
     public static function form(Form $form): Form

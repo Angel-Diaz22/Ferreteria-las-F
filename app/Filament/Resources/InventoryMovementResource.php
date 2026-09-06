@@ -8,6 +8,8 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 
 /**
  * ============================================================================
@@ -44,6 +46,21 @@ class InventoryMovementResource extends Resource
     public static function canCreate(): bool
     {
         return false; // El Kardex no se puede inventar a mano
+    }
+
+    public static function canEdit(Model $record): bool
+    {
+        return false;
+    }
+
+    public static function canDelete(Model $record): bool
+    {
+        return false;
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()->with(['product', 'warehouse', 'user']);
     }
 
     public static function form(Form $form): Form

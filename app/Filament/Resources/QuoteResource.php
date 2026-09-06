@@ -15,6 +15,8 @@ use Filament\Forms\Set;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -46,6 +48,26 @@ class QuoteResource extends Resource
     public static function canViewAny(): bool
     {
         return auth()->user()?->can('quotes.view') ?? false;
+    }
+
+    public static function canCreate(): bool
+    {
+        return auth()->user()?->can('quotes.create') ?? false;
+    }
+
+    public static function canEdit(Model $record): bool
+    {
+        return auth()->user()?->can('quotes.edit') ?? false;
+    }
+
+    public static function canDelete(Model $record): bool
+    {
+        return auth()->user()?->can('quotes.delete') ?? false;
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()->with(['customer', 'user']);
     }
 
     /**

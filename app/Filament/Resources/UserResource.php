@@ -10,6 +10,8 @@ use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Hash;
 
@@ -47,6 +49,11 @@ class UserResource extends Resource
     public static function canDelete(Model $record): bool
     {
         return auth()->user()?->can('users.manage') ?? false;
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()->with(['roles']);
     }
 
     public static function form(Form $form): Form
@@ -276,9 +283,32 @@ class UserResource extends Resource
                         }
                     }),
             ])
+            ->checkIfRecordIsSelectableUsing(
+                fn (User $record): bool => $record->id !== auth()->id(),
+            )
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\DeleteBulkAction::make()
+                        ->action(function (Collection $records) {
+                            $currentUserId = auth()->id();
+                            $toDelete = $records->reject(fn (User $user) => $user->id === $currentUserId);
+
+                            $toDelete->each->delete();
+
+                            if ($records->contains('id', $currentUserId)) {
+                                Notification::make()
+                                    ->warning()
+                                    ->title('Aviso de seguridad')
+                                    ->body('Tu propio usuario fue omitido del borrado masivo para proteger tu sesión activa.')
+                                    ->send();
+                            } else {
+                                Notification::make()
+                                    ->success()
+                                    ->title('Usuarios eliminados')
+                                    ->body("{$toDelete->count()} usuario(s) eliminados correctamente.")
+                                    ->send();
+                            }
+                        }),
                 ]),
             ]);
     }

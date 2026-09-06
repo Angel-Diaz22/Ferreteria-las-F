@@ -6,9 +6,13 @@ use App\Filament\Resources\CustomerResource\Pages;
 use App\Models\Customer;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Model;
 
 /**
  * ============================================================================
@@ -46,6 +50,37 @@ class CustomerResource extends Resource
     public static function canViewAny(): bool
     {
         return auth()->user()?->can('customers.view') ?? false;
+    }
+
+    public static function canCreate(): bool
+    {
+        return auth()->user()?->hasRole('admin') ?? false;
+    }
+
+    public static function canEdit(Model $record): bool
+    {
+        return auth()->user()?->hasRole('admin') ?? false;
+    }
+
+    public static function canDelete(Model $record): bool
+    {
+        if (! (auth()->user()?->hasRole('admin') ?? false)) {
+            return false;
+        }
+
+        return (float) $record->current_debt <= 0;
+    }
+
+    public static function canDeleteAny(): bool
+    {
+        return auth()->user()?->hasRole('admin') ?? false;
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->with(['priceList'])
+            ->withExists('consentLogs as has_consented');
     }
 
     /**
@@ -128,6 +163,7 @@ class CustomerResource extends Resource
                         Forms\Components\TextInput::make('credit_limit')
                             ->label('Cupo de Crédito Autorizado')
                             ->numeric()
+                            ->minValue(0)
                             ->prefix('$')
                             ->default(0)
                             ->disabled(fn (): bool => ! (auth()->user()?->hasRole('admin') ?? false))
@@ -286,10 +322,43 @@ class CustomerResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\DeleteAction::make()
+                    ->before(function (Customer $record, Tables\Actions\DeleteAction $action) {
+                        if ((float) $record->current_debt > 0) {
+                            Notification::make()
+                                ->title('No se puede eliminar el cliente')
+                                ->body('El cliente tiene una deuda activa pendiente. Cancele el saldo antes de eliminarlo.')
+                                ->danger()
+                                ->send();
+
+                            $action->halt();
+                        }
+                    }),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\DeleteBulkAction::make()
+                        ->visible(fn (): bool => auth()->user()?->hasRole('admin') ?? false)
+                        ->action(function (Collection $records) {
+                            $deletable = $records->filter(fn (Customer $customer) => (float) $customer->current_debt <= 0);
+                            $withDebt = $records->filter(fn (Customer $customer) => (float) $customer->current_debt > 0);
+
+                            $deletable->each->delete();
+
+                            if ($withDebt->isNotEmpty()) {
+                                Notification::make()
+                                    ->warning()
+                                    ->title('Eliminación parcial de clientes')
+                                    ->body("Se eliminaron {$deletable->count()} cliente(s). Se protegieron {$withDebt->count()} cliente(s) con saldo de deuda pendiente.")
+                                    ->send();
+                            } else {
+                                Notification::make()
+                                    ->success()
+                                    ->title('Clientes eliminados')
+                                    ->body("{$deletable->count()} cliente(s) eliminados correctamente.")
+                                    ->send();
+                            }
+                        }),
                 ]),
             ]);
     }

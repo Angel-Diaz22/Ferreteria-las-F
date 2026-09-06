@@ -26,6 +26,10 @@ class QuotePdfController extends Controller
      */
     public function download(Request $request, Quote $quote): Response
     {
+        if (auth()->user()?->roles()->exists() && ! auth()->user()?->can('quotes.view') && auth()->id() !== $quote->user_id) {
+            abort(403, 'No tienes permiso para descargar cotizaciones.');
+        }
+
         // Cargamos todas las relaciones necesarias para evitar consultas N+1 en la vista:
         $quote->load([
             'customer.priceList',
