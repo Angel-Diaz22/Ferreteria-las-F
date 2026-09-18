@@ -6,7 +6,7 @@ WORKDIR /app
 
 # Instalar dependencias de Node
 COPY package*.json ./
-RUN npm ci
+RUN npm install
 
 # Copiar archivos fuente necesarios para el empaquetado
 COPY vite.config.js ./
@@ -55,9 +55,7 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
         gd \
         intl \
         zip \
-        opcache \
-    && pecl install redis \
-    && docker-php-ext-enable redis
+        opcache
 
 # Instalar Composer desde imagen oficial
 COPY --from=composer:2.8 /usr/bin/composer /usr/bin/composer
