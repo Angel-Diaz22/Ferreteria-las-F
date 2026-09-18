@@ -1,58 +1,114 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# 🔧 Ferretería Las F — ERP / Punto de Venta (POS)
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Sistema integral de gestión ferretera con terminal de punto de venta interactivo, control de inventario multicaja y multi-bodega.
 
-## About Laravel
+**Stack**: Laravel 12 · PHP 8.4 · Filament v3 · Livewire 3 · PostgreSQL · Tailwind CSS
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+**Producción**: [https://ferreteria-las-f.onrender.com](https://ferreteria-las-f.onrender.com)
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+---
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Módulos
 
-## Learning Laravel
+| Módulo | Descripción |
+|--------|-------------|
+| **Terminal POS** | Flujo de 3 pasos: Pedido → Pago en Caja Central → Despacho |
+| **Productos** | Catálogo con categorías, marcas, stock por bodega, listas de precios |
+| **Inventario** | Kardex por bodega, movimientos de entrada/salida, ajustes |
+| **Compras** | Registro de compras a proveedores con actualización automática de stock |
+| **Cotizaciones** | Generación de cotizaciones con descarga PDF |
+| **Clientes** | Directorio de clientes con historial de compras |
+| **Cajas y Turnos** | Apertura/cierre de turnos, arqueo de caja, movimientos de efectivo |
+| **Reportes** | Dashboard de ventas, estadísticas generales |
+| **Configuración** | Datos de empresa, régimen tributario (IVA), ajustes del sistema |
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+## Reglas de Negocio del POS
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+- **Cajas de Mostrador** (Cajas 1 y 2): Atención sin cobro, generan pedidos e imprimen tirilla.
+- **Caja Central** (Caja 3): Recauda pagos (efectivo, tarjeta, transferencia), maneja arqueo contable.
+- Los cajeros solo acceden a cajas de mostrador; el admin entra directo a la Caja Central.
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+## Instalación Local
 
 ```bash
-composer require laravel/boost --dev
+# Clonar
+git clone https://github.com/Angel-Diaz22/Ferreteria-las-F.git
+cd Ferreteria-las-F
 
-php artisan boost:install
+# Dependencias
+composer install
+npm install && npm run build
+
+# Configurar
+cp .env.example .env
+php artisan key:generate
+
+# Base de datos (requiere PostgreSQL)
+php artisan migrate --seed
+
+# Iniciar
+php artisan serve   # o usar Laravel Herd
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+## Credenciales de Demo
 
-## Contributing
+| Rol | Email | Contraseña |
+|-----|-------|------------|
+| Admin | `admin@ferreteria.com` | `password123` |
+| Cajero | `cajero@ferreteria.com` | `password123` |
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## Tests
 
-## Code of Conduct
+```bash
+# Suite completa (275 tests, 714 assertions)
+php artisan test --compact
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+# Solo E2E (221 tests, 456 assertions — Tiers 1-4)
+php artisan test tests/Feature/E2E --compact
 
-## Security Vulnerabilities
+# Tier específico
+php artisan test tests/Feature/E2E/Tier1 --compact
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+**Cobertura por Tier:**
 
-## License
+| Tier | Enfoque | Tests |
+|------|---------|-------|
+| Tier 1 | Feature Coverage (F01-F20) | 100 |
+| Tier 2 | Boundary & Corner Cases | 100 |
+| Tier 3 | Cross-Feature Combinations | 16 |
+| Tier 4 | Real-World Application Scenarios | 5 |
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+## Despliegue (Render.com + Supabase)
+
+El proyecto incluye un `Dockerfile` multi-stage optimizado para Render:
+- **Etapa 1**: Node 20 Alpine → `npm run build` (Vite + Tailwind)
+- **Etapa 2**: PHP 8.4 FPM Alpine + Nginx + Supervisor
+
+Archivos clave: `Dockerfile`, `render.yaml`, `docker/entrypoint.sh`, `docker/nginx-render.conf`, `docker/supervisord.conf`
+
+Variables de entorno: ver `.env.production.example`
+
+## Estructura del Proyecto
+
+```
+app/
+├── Filament/
+│   ├── Pages/          # PosTerminal, ReportsPage, SettingsPage
+│   └── Resources/      # CRUD: Products, Sales, Purchases, Quotes, etc.
+├── Http/Controllers/   # QuotePdfController, SaleReceiptController
+├── Models/             # 24 modelos Eloquent
+└── Services/           # KardexService, PosService
+config/
+database/
+├── migrations/         # Esquema completo PostgreSQL
+├── seeders/            # Datos iniciales (admin, cajero, productos)
+└── factories/          # Factories para tests
+docker/                 # nginx-render.conf, supervisord.conf, entrypoint.sh
+resources/views/        # Blade views (POS terminal, reportes, PDFs)
+tests/Feature/E2E/      # Suite de 221 tests en 4 tiers
+```
+
+## Licencia
+
+Proyecto privado — Ferretería Las F © 2026
