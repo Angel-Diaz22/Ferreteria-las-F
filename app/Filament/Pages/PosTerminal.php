@@ -184,29 +184,43 @@ class PosTerminal extends Page
 
         $user = auth()->user();
 
-        // 1. REGLA DE ORO: El Administrador siempre entra DIRECTO a la Caja 3 (Caja Central / Pagos)
+        // 1. REGLA DE ORO: El Administrador entra DIRECTO a la Caja Principal configurada (o Recaudadora/Central)
         if ($user?->hasRole('admin')) {
-            $caja3 = CashRegister::where('name', 'like', '%Caja 3%')
-                ->orWhere('name', 'like', '%Central%')
-                ->orWhere('name', 'like', '%Patio%')
-                ->first();
+            $mainRegister = CashRegister::where('is_active', true)->where('is_main', true)->first();
 
-            if (! $caja3) {
-                $caja3 = CashRegister::orderByDesc('id')->first();
+            if (! $mainRegister) {
+                $mainRegister = CashRegister::where('is_active', true)->where('type', CashRegister::TYPE_CASHIER)->first();
             }
 
-            if ($caja3) {
-                $this->activeCashRegisterId = $caja3->id;
+            if (! $mainRegister) {
+                $mainRegister = CashRegister::where('is_active', true)
+                    ->where(function ($q) {
+                        $q->where('name', 'like', '%Caja 3%')
+                            ->orWhere('name', 'like', '%Central%')
+                            ->orWhere('name', 'like', '%Patio%');
+                    })->first();
+            }
 
-                // Buscar si ya tiene un turno abierto en Caja 3
-                $openShift = CashShift::where('cash_register_id', $caja3->id)
+            if (! $mainRegister) {
+                $mainRegister = CashRegister::where('is_active', true)->orderBy('display_order')->first();
+            }
+
+            if (! $mainRegister) {
+                $mainRegister = CashRegister::orderByDesc('id')->first();
+            }
+
+            if ($mainRegister) {
+                $this->activeCashRegisterId = $mainRegister->id;
+
+                // Buscar si ya tiene un turno abierto en la caja principal
+                $openShift = CashShift::where('cash_register_id', $mainRegister->id)
                     ->where('user_id', $user->id)
                     ->where('status', 'open')
                     ->first();
 
                 if (! $openShift) {
                     $openShift = CashShift::create([
-                        'cash_register_id' => $caja3->id,
+                        'cash_register_id' => $mainRegister->id,
                         'user_id' => $user->id,
                         'opening_amount' => 0.0,
                         'status' => 'open',
@@ -254,11 +268,11 @@ class PosTerminal extends Page
             return;
         }
 
-        // Si es un usuario no-administrador intentando acceder a la Caja 3
+        // Si es un usuario no-administrador intentando acceder a una caja recaudadora
         if ($register->isCashier() && ! auth()->user()?->hasRole('admin')) {
             Notification::make()
                 ->title('⛔ Acceso Restringido')
-                ->body('La Caja 3 es la Caja Central de Cobro y es de uso exclusivo del Administrador. Por favor seleccione Caja 1 o Caja 2 para atención de mostrador.')
+                ->body("La {$register->name} es una Caja Recaudadora y es de uso exclusivo del Administrador. Por favor seleccione un puesto de atención o mostrador.")
                 ->danger()
                 ->duration(8000)
                 ->send();
@@ -1334,7 +1348,7 @@ class PosTerminal extends Page
     {
         $isAdmin = (bool) auth()->user()?->hasRole('admin');
 
-        $query = CashRegister::where('is_active', true)->orderBy('name');
+        $query = CashRegister::where('is_active', true)->orderBy('display_order')->orderBy('name');
 
         if (! $isAdmin) {
             $registers = $query->get()->filter(fn ($reg) => $reg->isAttentionRegister());

@@ -1,7 +1,7 @@
 # 🔍 Análisis Técnico y Roadmap — Ferretería Las F
 
 **Fecha**: 2026-09-17  
-**Estado**: 📋 En Revisión — Esperando respuestas del propietario
+**Estado**: 🚀 Respuestas recibidas — Plan de M1 preparado para ejecución
 
 ---
 
@@ -119,32 +119,74 @@
 ### Sobre el Módulo de Cajas (M1):
 
 **P1**: Cuando agregas una caja nueva, ¿debería estar asociada obligatoriamente a una bodega, o puede existir independiente?
-> Tu respuesta: _____
+> Tu respuesta: Es independiente
 
 **P2**: ¿Los tipos de caja que necesitas son estos 3, o necesitas más?
 - **Mostrador** (atención sin cobro, genera pedidos)  
 - **Recaudadora** (cobra, maneja dinero, arqueo)  
 - **Híbrida** (hace ambas cosas — para negocios pequeños donde una sola persona atiende y cobra)
-> Tu respuesta: _____
+> Tu respuesta: Mostrador, recaudadora y hibrida
 
 **P3**: ¿Solo el admin puede crear/editar/eliminar cajas, o quieres que otro rol también pueda?
-> Tu respuesta: _____
+> Tu respuesta: Si
 
 **P4**: ¿Quieres un límite máximo de cajas configurable, o ilimitado?
-> Tu respuesta: _____
+> Tu respuesta: Maximo 10 cajas
 
 ### Sobre Backups (M3):
 
 **P5**: ¿Tienes cuenta de Google Workspace (empresarial) o es un Gmail personal? Esto define cuánto espacio de Drive hay disponible (15 GB gratis con Gmail, 30 GB+ con Workspace).
-> Tu respuesta: _____
+> Tu respuesta: Tengo mi cuenta de google pro con 5 tb de espacio
 
 **P6**: ¿Cada cuánto quieres el backup? ¿Diario a medianoche? ¿Cada 12 horas?
-> Tu respuesta: _____
+> Tu respuesta: cada 12 horas
 
 ### Sobre Prioridades:
 
 **P7**: Del roadmap de Prioridad 2 (M2-M6), ¿cuáles te interesan implementar ahora y cuáles después?
-> Tu respuesta: _____
+> Tu respuesta: Todos ( Aclarame un poco mas esto)
+
+#### 📋 Aclaración Detallada de los Módulos M2 al M6:
+
+* **M2: Reportes Avanzados**:
+  - **Qué hace**: El sistema actual solo muestra métricas globales básicas. Con este módulo podrás filtrar por fechas (Hoy, Ayer, Esta Semana, Este Mes, Rango libre) y ver:
+    1. **Ventas por Caja**: Saber exactamente cuánto facturó cada una de las hasta 10 cajas.
+    2. **Ventas por Vendedor/Cajero**: Ranking de quién atendió más y cuánto vendió (útil para incentivos o control).
+    3. **Rentabilidad y Margen**: Ganancia neta real (Precio de Venta vs. Costo de Compra de los productos).
+    4. **Exportación**: Descarga directa a Excel y PDF para contabilidad.
+
+* **M3: Backups a Google Drive cada 12 horas**:
+  - **Qué hace**: Con tu cuenta Google Pro de 5 TB, la app generará automáticamente cada 12 horas un archivo comprimido `.sql.gz` con una copia íntegra de la base de datos de Supabase y lo enviará directamente a una carpeta privada de tu Google Drive.
+  - **Beneficio**: Si Supabase o el hosting sufren cualquier problema o si alguien borra datos por error, nunca perderás más de medio día de trabajo y podrás restaurar todo de inmediato.
+
+* **M4: Historial de Actividad (Auditoría visual en panel)**:
+  - **Qué hace**: El sistema ya registra eventos internamente con `spatie/laravel-activitylog`, pero hoy no hay una pantalla visual para consultarlo.
+  - **Beneficio**: Crea una pantalla exclusiva para el Administrador donde ves una línea de tiempo: "Cajero Juan abrió turno en Caja 2 a las 08:00 AM", "Admin anuló la venta #1045", "Pedro cambió el precio del Martillo de $25.000 a $28.000". Cero misterios sobre quién hizo qué.
+
+* **M5: Alertas de Stock Bajo**:
+  - **Qué hace**: Cada producto tiene configurado un stock mínimo (`min_stock`).
+  - **Beneficio**: En el momento en que una venta haga que queden menos unidades de las mínimas, saldrá una notificación en la campana del panel superior y una señal de alerta en el POS, evitando que un cliente llegue al mostrador pidiendo algo que ya se agotó y agilizando la orden de compra a proveedores.
+
+* **M6: Resumen Diario por WhatsApp / Email**:
+  - **Qué hace**: Al cierre del día comercial, el sistema envía un mensaje automático al WhatsApp o correo del dueño con el resumen ejecutivo: "$ Total vendido hoy, % en efectivo vs transferencias, número de ventas atendidas y productos agotados".
+
+---
 
 **P8**: ¿Hay algún módulo que no mencioné y que necesitas? Ejemplo: control de fiados/créditos a clientes, cuentas por cobrar, nómina de empleados, etc.
-> Tu respuesta: _____
+> Tu respuesta: Por ahora no pero piensa cual seria util
+
+#### 💡 Módulos Recomendados de Alto Impacto para Ferretería:
+
+1. **Módulo de Cuentas por Cobrar / Cartera (Fiados)** ⭐ _(El más recomendado para Colombia)_:
+   - En ferreterías es el día a día fiar a contratistas, maestros de obra o vecinos.
+   - El sistema ya tiene `credit_limit` y `current_debt` en la base de datos, pero falta:
+     - Pantalla de cobro de cuotas o abonos parciales (generación de Recibo de Caja).
+     - Estado de cuenta por cliente (imprimible o enviable por WhatsApp).
+     - Alerta visual en el POS cuando un cliente con deuda intente comprar más sin abonar.
+
+2. **Control de Gastos de Caja Menor (Egresos Operativos)**:
+   - Registrar salidas rápidas de dinero de la caja durante el turno: flete de un pedido, almuerzos, compras menores de aseo o ferretería vecina.
+   - Estos gastos se descuentan automáticamente del efectivo esperado en el arqueo de cierre, evitando descuadres de caja.
+
+3. **Devoluciones de Mostrador con Saldo a Favor**:
+   - Cuando un cliente regresa tubos, codos o tornillos sobrantes de su obra, registrar la devolución al inventario y generar un saldo a favor en su cuenta para que lo gaste en su siguiente compra sin tener que devolverle efectivo.

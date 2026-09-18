@@ -84,6 +84,9 @@ class DatabaseSeeder extends Seeder
             ['name' => 'Caja 1 - Mostrador Principal'],
             [
                 'warehouse_id' => $warehouse->id,
+                'type' => CashRegister::TYPE_COUNTER,
+                'is_main' => false,
+                'display_order' => 1,
                 'is_active' => true,
             ]
         );
@@ -92,6 +95,9 @@ class DatabaseSeeder extends Seeder
             ['name' => 'Caja 2 - Mostrador Auxiliar'],
             [
                 'warehouse_id' => $warehouse->id,
+                'type' => CashRegister::TYPE_COUNTER,
+                'is_main' => false,
+                'display_order' => 2,
                 'is_active' => true,
             ]
         );
@@ -100,6 +106,9 @@ class DatabaseSeeder extends Seeder
             ['name' => 'Caja 3 - Patio y Despacho'],
             [
                 'warehouse_id' => $warehouse->id,
+                'type' => CashRegister::TYPE_CASHIER,
+                'is_main' => true,
+                'display_order' => 3,
                 'is_active' => true,
             ]
         );

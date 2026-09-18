@@ -2264,7 +2264,7 @@
                         <div class="p-3.5 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-2.5">
                             <x-heroicon-o-information-circle class="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
                             <div>
-                                <h4 class="text-xs font-black text-amber-900">Puestos de Atención (Mostrador 1 y 2)</h4>
+                                <h4 class="text-xs font-black text-amber-900">Puestos de Atención y Mostrador</h4>
                                 <p class="text-[11px] text-amber-800 mt-0.5 leading-relaxed">
                                     Estas cajas arman pedidos y apartan inventario. <strong>No manejan dinero en efectivo ni reciben pagos</strong> (la base inicial es automáticamente $0 COP).
                                 </p>
@@ -2274,7 +2274,7 @@
 
                     {{-- Lista de Cajas Disponibles y en Uso --}}
                     <div class="space-y-2.5">
-                        <span class="text-xs font-black text-gray-700 uppercase tracking-wide">Puestos de Atención:</span>
+                        <span class="text-xs font-black text-gray-700 uppercase tracking-wide">Puestos Disponibles:</span>
 
                         @foreach($this->cashRegistersWithStatus as $item)
                             @php
@@ -2295,7 +2295,23 @@
                                         {{ substr($reg->name, 0, 6) }}
                                     </div>
                                     <div>
-                                        <h4 class="text-sm font-black text-gray-900">{{ $reg->name }}</h4>
+                                        <div class="flex items-center gap-1.5 flex-wrap">
+                                            <h4 class="text-sm font-black text-gray-900">{{ $reg->name }}</h4>
+                                            @if($reg->is_main)
+                                                <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-black bg-amber-100 text-amber-800">
+                                                    ★ Principal
+                                                </span>
+                                            @endif
+                                            @if($reg->type === 'cashier')
+                                                <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-green-100 text-green-800">
+                                                    Recaudadora
+                                                </span>
+                                            @elseif($reg->type === 'hybrid')
+                                                <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-800">
+                                                    Híbrida
+                                                </span>
+                                            @endif
+                                        </div>
                                         <div class="flex items-center gap-1.5 mt-0.5">
                                             @if($status === 'free')
                                                 <span class="inline-flex items-center gap-1 text-[11px] font-bold text-green-700">
