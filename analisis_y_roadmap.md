@@ -79,16 +79,13 @@
 
 ### Prioridad 1 — Mejora Solicitada (Tu pedido)
 
-#### M1: Módulo de Gestión Dinámica de Cajas
-> Convertir las 3 cajas fijas en un sistema donde se pueda crear, editar, activar/desactivar y asignar roles a N cajas.
-
-**Cambios necesarios:**
-1. **Migración**: Agregar campos `type`, `is_main`, `display_order`, `description` a `cash_registers`
-2. **Modelo**: Reemplazar el método `isCashier()` hardcoded por lógica basada en el campo `type`
-3. **Recurso Filament**: Crear `CashRegisterResource` con CRUD completo (crear/editar/activar/desactivar cajas)
-4. **PosTerminal**: Adaptar la selección de caja para que sea dinámica (N cajas de mostrador, M cajas recaudadoras)
-5. **SettingsPage**: Agregar sección de gestión de cajas en Configuración
-6. **Regla de negocio**: Solo puede haber **una** caja marcada como `is_main` (la recaudadora principal)
+#### M1: Módulo de Gestión Dinámica de Cajas ✅ [COMPLETADO Y EN PRODUCCIÓN]
+> Convertir las 3 cajas fijas en un sistema donde se pueda crear, editar, activar/desactivar y asignar roles a N cajas (hasta 10).
+- ✅ **Migración**: Campos `type`, `is_main`, `display_order` y `description` añadidos e indexados.
+- ✅ **Modelo Eloquent**: Validación de máximo 10 cajas, exclusividad mutua de caja principal (`is_main`) y métodos de tipo (`counter`, `cashier`, `hybrid`).
+- ✅ **Filament Resource**: Nuevo panel administrativo en `Configuración > Cajas Registradoras` exclusivo para `admin`.
+- ✅ **Terminal POS**: Asignación automática de caja principal para el administrador y selección dinámica con badges para cajeros.
+- ✅ **Tests**: 319 pruebas ejecutadas y 100% aprobadas. Código formateado con Pint y desplegado en producción.
 
 ---
 
