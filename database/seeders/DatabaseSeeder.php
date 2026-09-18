@@ -107,7 +107,7 @@ class DatabaseSeeder extends Seeder
         // 7. Initial Category, Brand & Sample Product
         $brand = Brand::firstOrCreate(
             ['name' => 'Stanley'],
-            ['slug' => 'stanley', 'description' => 'Herramientas manuales y de precisión']
+            ['slug' => 'stanley', 'is_active' => true]
         );
 
         $category = Category::firstOrCreate(
