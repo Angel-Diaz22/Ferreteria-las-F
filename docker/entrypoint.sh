@@ -25,6 +25,7 @@ php artisan storage:link --force || true
 echo "=> Ejecutando package:discover y filament:upgrade..."
 php artisan package:discover --ansi || true
 php artisan filament:upgrade || true
+php artisan filament:assets || true
 
 # 6. Limpieza preventiva de cachés
 php artisan config:clear || true
